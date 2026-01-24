@@ -5,18 +5,17 @@ from pyspark.sql.types import DoubleType, IntegerType
 
 def main():
     # ---------------------------------------------------------
-    # 1. Configuración del Entorno Spark (con Spark UI visible en VM)
+    # 1. Configuración del Entorno Spark
     # ---------------------------------------------------------
     spark = (
         SparkSession.builder
         .appName("ProcesamientoClothingRetail")
-        .master("local[*]")
-        # IMPORTANTE: Spark UI en puerto fijo
-        .config("spark.ui.port", "4040")
-        # IMPORTANTE: permitir UI accesible desde fuera de la VM
-        .config("spark.ui.bindAddress", "0.0.0.0")
-        # IMPORTANTE: bind del driver (para VM)
-        .config("spark.driver.bindAddress", "0.0.0.0")
+        #.master("local[*]")
+        .master("local[2]")
+        #.config("spark.ui.port", "4040")
+        #.config("spark.ui.bindAddress", "0.0.0.0")
+        #.config("spark.driver.bindAddress", "0.0.0.0")
+        .config("spark.driver.host", "127.0.0.1")
         .config("spark.executor.memory", "4g")
         .config("spark.sql.shuffle.partitions", "8")
         .getOrCreate()
@@ -25,14 +24,15 @@ def main():
     spark.sparkContext.setLogLevel("WARN")
 
     # Mostrar URL del Spark UI
-    ui_url = spark.sparkContext.uiWebUrl
-    print("\n>>> Entorno Spark iniciado")
-    print(f">>> Spark UI URL (desde la VM): {ui_url}")
-    print(">>> Si estás en tu PC, abre: http://IP_DE_LA_VM:4040\n")
+    #ui_url = spark.sparkContext.uiWebUrl
+    #print("\n>>> Entorno Spark iniciado")
+    #print(f">>> Spark UI URL (desde la VM): {ui_url}")
+    #print(">>> Si estás en tu PC, abre: http://IP_DE_LA_VM:4040\n")
 
     # ---------------------------------------------------------
     # 2. Carga y Preparación de Datos
     # ---------------------------------------------------------
+    #path = "C:/Users/emont/OneDrive/Escritorio/Desarrollo/Proyecto-Computacion-Paralela-code/data/transactions.csv"
     path = "../data/transactions.csv"
 
     df_raw = spark.read.csv(path, header=True, inferSchema=True)
@@ -119,8 +119,8 @@ def main():
     # ---------------------------------------------------------
     # Mantener Spark UI viva
     # ---------------------------------------------------------
-    print("\n>>> Manteniendo la sesión activa para revisar Spark UI...")
-    input("Presione Enter para terminar la ejecución y cerrar Spark UI...")
+    #print("\n>>> Manteniendo la sesión activa para revisar Spark UI...")
+    #input("Presione Enter para terminar la ejecución y cerrar Spark UI...")
     spark.stop()
 
 if __name__ == "__main__":

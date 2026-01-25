@@ -31,23 +31,30 @@ def process_request(df, request):
     params = request.get("params", {})
 
     if operation == "top_sales":
+        log_operation("Top de sucursales con más ventas")
         return top_sales(df, params.get("top_n", 5))
 
     elif operation == "total_sales_by_branch":
+        log_operation("Ventas totales por sucursal")
         return total_sales_by_branch(df, params.get("top_n", 10))
 
     elif operation == "top_selling_products":
+        log_operation("Top de productos más vendidos")
         return top_selling_products(df)
 
     elif operation == "return_rate_by_store":
+        log_operation("Tasa de devoluciones por tienda")
         return return_rate_by_store(df)
 
     elif operation == "anomalous_return_days":
-        return anomalous_return_days(df, params.get("z_threshold", 2.0))    
+        log_operation("Días con devoluciones anómalas")
+        return anomalous_return_days(df)    
 
     else:
         raise ValueError("Operación no válida")
 
+def log_operation(op_name: str):
+    print(f"[SERVER] Operación ejecutada: {op_name}")
 
 def main():
     spark = start_spark()
@@ -68,8 +75,6 @@ def main():
             request = json.loads(data)
 
             result_df = process_request(df, request)
-
-            output = result_df.show(truncate=False)
 
             rows = result_df.toJSON().collect()
             conn.sendall(json.dumps(rows).encode())

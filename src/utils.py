@@ -114,7 +114,7 @@ def return_rate_by_store(df: DataFrame) -> DataFrame:
 # ======================================================
 # 6. Días con picos anómalos de devoluciones
 # ======================================================
-def anomalous_return_days(df: DataFrame, z_threshold: float = 2.0) -> DataFrame:
+def anomalous_return_days(df: DataFrame) -> DataFrame:
     """
     Detecta días con picos anómalos de devoluciones usando Z-score.
     """
@@ -133,6 +133,11 @@ def anomalous_return_days(df: DataFrame, z_threshold: float = 2.0) -> DataFrame:
     round(stddev("Monto_Devuelto"), 2).alias("desviacion")
     ).collect()[0]
 
-    anomalies = daily_returns.filter(col("Monto_Devuelto") > z_threshold)
+    media = stats["media"]
+    desviacion = stats["desviacion"]
+
+    umbral = media + desviacion
+
+    anomalies = daily_returns.filter(col("Monto_Devuelto") > umbral)
 
     return anomalies

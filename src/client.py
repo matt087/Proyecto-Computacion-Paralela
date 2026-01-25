@@ -1,5 +1,6 @@
 import socket
 import json
+import os
 from tabulate import tabulate
 
 HOST = "127.0.0.1"
@@ -28,6 +29,7 @@ def print_result(result):
     print(tabulate(rows, headers="keys", tablefmt="grid"))
 
 def main():
+    os.system("clear")
     while(True):    
         print("""
             \tAplicación de Análisis de Ventas Mayoristas\n
@@ -65,8 +67,7 @@ def main():
 
         elif option == "5":
             payload = {
-                "operation": "anomalous_return_days",
-                "params": {"z_threshold": float(input("Umbral definido: "))}
+                "operation": "anomalous_return_days"
             }    
 
         elif option == "6":
@@ -80,6 +81,8 @@ def main():
         print("\nRealizando petición al servidor...\n")
         result = send_request(payload)
         print_result(result)
+        wait_input = input("\n\tPRESIONE UNA TECLA PARA CONTINUAR...")
+        os.system("clear")
 
 
 if __name__ == "__main__":

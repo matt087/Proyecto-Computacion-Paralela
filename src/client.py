@@ -1,6 +1,7 @@
 import socket
 import json
 import os
+import time
 from tabulate import tabulate
 from dotenv import load_dotenv
 
@@ -14,9 +15,9 @@ class Colors:
     RESET = "\033[0m"
 
 def print_title(title):
-    print("\n" + Colors.CYAN + Colors.BOLD + "=" * 70)
-    print(title.center(70))
-    print("=" * 70 + Colors.RESET + "\n")
+    print("\n" + Colors.CYAN + Colors.BOLD + "=" * 80)
+    print(title.center(80))
+    print("=" * 80 + Colors.RESET + "\n")
 
 load_dotenv()
 
@@ -24,6 +25,8 @@ HOST = os.getenv("CLIENT_HOST")
 PORT = int(os.getenv("CLIENT_PORT"))
 
 def send_request(payload):
+    start_time = time.perf_counter()
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
     s.sendall(json.dumps(payload).encode())
@@ -31,7 +34,10 @@ def send_request(payload):
     data = s.recv(200000).decode()
     s.close()
 
-    return json.loads(data)
+    end_time = time.perf_counter()
+    elapsed = end_time - start_time
+
+    return json.loads(data), elapsed
 
 def get_stores():
     payload = {
@@ -156,7 +162,7 @@ def main():
 
         print(Colors.BLUE + "\nRealizando petición al servidor...\n" + Colors.RESET)
         try:
-            result = send_request(payload)
+            result, elapsed = send_request(payload)
 
             titles = {
                 1: "Top de Sucursales con Más Ventas",
@@ -168,6 +174,8 @@ def main():
             }
             os.system("clear")
             print_result(result, titles.get(option))
+            print(f"{Colors.GREEN}Tiempo de ejecución:{Colors.RESET} {elapsed:.3f} segundos")
+
 
         except Exception as e:
             print(Colors.RED + f"\nError al comunicarse con el servidor: {e}" + Colors.RESET)

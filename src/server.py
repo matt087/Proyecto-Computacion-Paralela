@@ -3,6 +3,7 @@ import json
 import os
 from pyspark.sql import SparkSession
 from dotenv import load_dotenv
+from datetime import datetime
 
 from utils import *
 
@@ -39,43 +40,76 @@ def start_spark():
 
     return spark
 
+def persist_result_parquet(
+    df,
+    operation_name: str,
+    base_path: str = "./data/parquet_results"
+):
+    """
+    Almacena un DataFrame resultado en formato Parquet.
+    """
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = os.path.join(base_path, operation_name, timestamp)
+
+    (
+        df
+        .coalesce(1)  
+        .write
+        .mode("overwrite")
+        .parquet(output_path)
+    )
+
+    print(f"[SERVER] Resultado almacenado en: {output_path}")
 
 def process_request(df, request):
     operation = request.get("operation")
     params = request.get("params", {})
 
     if operation == "top_sales":
+        result_df = top_sales(df, stores_df, params.get("top_n", 5))
         log_operation("Top de sucursales con más ventas")
-        return top_sales(df, stores_df, params.get("top_n", 5))
+        persist_result_parquet(result_df, "top_sales")
+        return result_df
 
     elif operation == "total_sales_by_branch":
+        result_df = total_sales_by_branch(df, stores_df, params.get("id_sucursal", 10))
         log_operation("Ventas totales por sucursal")
-        return total_sales_by_branch(df, stores_df, params.get("id_sucursal", 10))
+        persist_result_parquet(result_df, "total_sales_by_branch")
+        return result_df
 
     elif operation == "top_selling_products":
+        result_df = top_selling_products(df, products_df)
         log_operation("Top de productos más vendidos")
-        return top_selling_products(df, products_df)
+        persist_result_parquet(result_df, "top_selling_products")
+        return result_df
 
     elif operation == "return_rate_by_store":
         log_operation("Tasa de devoluciones por tienda")
+        persist_result_parquet(result_df, "return_rate_by_store")
         return return_rate_by_store(df, stores_df)
 
     elif operation == "anomalous_return_days":
-        log_operation("Días con devoluciones anómalas")
-        return anomalous_return_days(df)    
+        result_df = anomalous_return_days(df)    
+        log_operation("Días con devoluciones anómalas")    
+        persist_result_parquet(result_df, "anomalous_return_days")
+        return result_df
 
     elif operation == "top_products_by_store":
-        log_operation("Top productos por sucursal")
-        return top_selling_products_by_store(
+        result_df = top_selling_products_by_store(
             df,
             products_df, 
             params.get("store_id"),
             params.get("top_n", 10)
         )
+        log_operation("Top productos por sucursal")
+        persist_result_parquet(result_df, "top_products_by_store")
+        return result_df
 
     elif operation == "list_stores":
+        result_df = stores_df.select("Store_ID", "Store_Name").orderBy("Store_ID")
         log_operation("Listado de tiendas")
-        return stores_df.select("Store_ID", "Store_Name").orderBy("Store_ID")
+        return result_df
 
     else:
         raise ValueError("Operación no válida")

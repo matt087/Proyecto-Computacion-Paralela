@@ -17,19 +17,26 @@ products_df = None
 
 def start_spark():
     spark = (
-        SparkSession.builder \
-        .appName("ProcesamientoClothingRetail") \
-        .master("local[*]") \
-        .config("spark.ui.port", "4040") \
-        .config("spark.ui.bindAddress", "0.0.0.0") \
-        .config("spark.driver.bindAddress", "0.0.0.0") \
-        .config("spark.driver.host", "127.0.0.1") \
-        .config("spark.executor.memory", "4g") \
-        .config("spark.sql.shuffle.partitions", "8") \
+        SparkSession.builder
+        .appName("ProcesamientoClothingRetail")
+        .master("spark://10.0.20.1:7077")
+        .config("spark.ui.port", "4040")
+        .config("spark.ui.bindAddress", "0.0.0.0")
+        .config("spark.driver.host", "10.0.20.1")
+        .config("spark.driver.bindAddress", "0.0.0.0")
+        .config("spark.executor.memory", "2g")
+        .config("spark.executor.cores", "1")
+        .config("spark.sql.shuffle.partitions", "8")
         .config("spark.jars", "./dependencies/postgresql-42.7.3.jar")
+
         .getOrCreate()
     )
+
     spark.sparkContext.setLogLevel("WARN")
+    print(">>> Spark iniciado en modo cluster")
+    print(">>> Master:", spark.sparkContext.master)
+    print(">>> Spark UI:", spark.sparkContext.uiWebUrl)
+
     return spark
 
 

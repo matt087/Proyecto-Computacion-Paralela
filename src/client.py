@@ -43,19 +43,19 @@ def get_stores():
 def select_store():
     stores = get_stores()
 
-    print("\n=== Seleccione una sucursal ===\n")
+    print(Colors.CYAN + "\n=== Seleccione una sucursal ===\n" + Colors.RESET)
     for store in stores:
-        print(f"[{store['Store_ID']}] {store['Store_Name']}")
+        print(f"{Colors.GREEN}[{store['Store_ID']}]{Colors.RESET} {store['Store_Name']}")
 
     while True:
         try:
-            store_id = int(input("\nIngrese el ID de la sucursal: "))
+            store_id = int(input(Colors.YELLOW + "\nIngrese el ID de la sucursal: " + Colors.RESET))
             if any(s["Store_ID"] == store_id for s in stores):
                 return store_id
             else:
-                print("ID inválido, intente nuevamente.")
+                print(Colors.RED + "ID inválido, intente nuevamente." + Colors.RESET)
         except ValueError:
-            print("Ingrese un número válido.")
+            print(Colors.RED + "Ingrese un número válido." + Colors.RESET)
 
 def input_int(prompt, min_val=None, max_val=None):
     while True:
@@ -63,28 +63,28 @@ def input_int(prompt, min_val=None, max_val=None):
             value = int(input(prompt))
 
             if min_val is not None and value < min_val:
-                print(f"El valor debe ser >= {min_val}")
+                print(Colors.RED + f"El valor debe ser >= {min_val}" + Colors.RESET)
                 continue
 
             if max_val is not None and value > max_val:
-                print(f"El valor debe ser <= {max_val}")
+                print(Colors.RED + f"El valor debe ser <= {max_val}" + Colors.RESET)
                 continue
 
             return value
 
         except ValueError:
-            print("Ingrese un número válido.")
+            print(Colors.RED + "Ingrese un número válido." + Colors.RESET)
 
 def print_result(result, title=None):
     if title:
         print_title(title)
 
     if isinstance(result, dict) and "error" in result:
-        print(Colors.RED +"\nError:"+ Colors.RESET, result["error"])
+        print(Colors.RED + "\nError:" + Colors.RESET, result["error"])
         return
 
     if not result:
-        print(Colors.YELLOW +"\nSin resultados"+ Colors.RESET)
+        print(Colors.YELLOW + "\nSin resultados" + Colors.RESET)
         return
 
     rows = [json.loads(r) for r in result]    
@@ -92,28 +92,28 @@ def print_result(result, title=None):
 
 def main():
     os.system("clear")
-    while(True):   
+    while(True):    
         print(Colors.CYAN + Colors.BOLD + """
             ╔═════════════════════════════════════════════════╗
-            ║   APLICACIÓN DE ANÁLISIS DE VENTAS MAYORISTAS   ║
+            ║    APLICACIÓN DE ANÁLISIS DE VENTAS MAYORISTAS  ║
             ╚═════════════════════════════════════════════════╝
         """ + Colors.RESET) 
-        print("""
-            1. Top de sucursales con más ventas
-            2. Ventas totales por sucursal
-            3. Top de Productos más vendidos
-            4. Productos más vendidos por sucursal
-            5. Tasa de devoluciones global
-            6. Días con devoluciones anómalas 
-            7. Salir
+        print(f"""
+            {Colors.GREEN}1.{Colors.RESET} Top de sucursales con más ventas
+            {Colors.GREEN}2.{Colors.RESET} Ventas totales por sucursal
+            {Colors.GREEN}3.{Colors.RESET} Top de Productos más vendidos
+            {Colors.GREEN}4.{Colors.RESET} Productos más vendidos por sucursal
+            {Colors.GREEN}5.{Colors.RESET} Tasa de devoluciones global
+            {Colors.GREEN}6.{Colors.RESET} Días con devoluciones anómalas 
+            {Colors.GREEN}7.{Colors.RESET} Salir
         """)
 
-        option = input_int(Colors.BOLD +"Seleccione una opción: "+ Colors.RESET, 1, 7)
+        option = input_int(Colors.YELLOW + Colors.BOLD + "Seleccione una opción: " + Colors.RESET, 1, 7)
 
         if option == 1:
             payload = {
                 "operation": "top_sales",
-                "params": {"top_n": input_int(Colors.BOLD +"Ingrese el valor del tamaño del top: "+ Colors.RESET, 1, 35)}
+                "params": {"top_n": input_int(Colors.YELLOW + "Ingrese el valor del tamaño del top: " + Colors.RESET, 1, 35)}
             }
 
         elif option == 2:
@@ -125,7 +125,7 @@ def main():
         elif option == 3:
             payload = {
                 "operation": "top_selling_products",
-                "params": {"top_n": input_int(Colors.BOLD +"Ingrese el valor del tamaño del top: "+ Colors.RESET, 1, 100)}
+                "params": {"top_n": input_int(Colors.YELLOW + "Ingrese el valor del tamaño del top: " + Colors.RESET, 1, 100)}
             }
 
         elif option == 4:
@@ -133,7 +133,7 @@ def main():
                 "operation": "top_products_by_store",
                 "params": {
                     "store_id": select_store(),
-                    "top_n": input_int(Colors.BOLD +"Ingrese el valor del tamaño del top: "+ Colors.RESET, 1, 100)
+                    "top_n": input_int(Colors.YELLOW + "Ingrese el valor del tamaño del top: " + Colors.RESET, 1, 100)
                 }
             }
         elif option == 5:
@@ -143,17 +143,17 @@ def main():
         elif option == 6:
             payload = {
                 "operation": "anomalous_return_days"
-            }    
+            }     
         
         elif option == 7:
-            print("Saliendo del sistema...")    
+            print(Colors.BLUE + "Saliendo del sistema..." + Colors.RESET)     
             break
 
         else:
-            print("Opción inválida")
+            print(Colors.RED + "Opción inválida" + Colors.RESET)
             return
 
-        print(Colors.BLUE +"\nRealizando petición al servidor...\n" + Colors.RESET)
+        print(Colors.BLUE + "\nRealizando petición al servidor...\n" + Colors.RESET)
         try:
             result = send_request(payload)
 

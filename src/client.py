@@ -108,12 +108,12 @@ def main():
             7. Salir
         """)
 
-        option = input_int("Seleccione una opción: ", 1, 7)
+        option = input_int(Colors.BOLD +"Seleccione una opción: "+ Colors.RESET, 1, 7)
 
         if option == 1:
             payload = {
                 "operation": "top_sales",
-                "params": {"top_n": input_int("Top N: ", 1, 35)}
+                "params": {"top_n": input_int(Colors.BOLD +"Ingrese el valor del tamaño del top: "+ Colors.RESET, 1, 35)}
             }
 
         elif option == 2:
@@ -125,7 +125,7 @@ def main():
         elif option == 3:
             payload = {
                 "operation": "top_selling_products",
-                "params": {"top_n": input_int("Top N: ", 1, 100)}
+                "params": {"top_n": input_int(Colors.BOLD +"Ingrese el valor del tamaño del top: "+ Colors.RESET, 1, 100)}
             }
 
         elif option == 4:
@@ -133,7 +133,7 @@ def main():
                 "operation": "top_products_by_store",
                 "params": {
                     "store_id": select_store(),
-                    "top_n": input_int("Top N: ", 1, 100)
+                    "top_n": input_int(Colors.BOLD +"Ingrese el valor del tamaño del top: "+ Colors.RESET, 1, 100)
                 }
             }
         elif option == 5:
@@ -165,7 +165,7 @@ def main():
                 5: "Tasa de Devoluciones Global",
                 6: "Días con Devoluciones Anómalas"
             }
-
+            os.system("clear")
             print_result(result, titles.get(option))
 
         except Exception as e:

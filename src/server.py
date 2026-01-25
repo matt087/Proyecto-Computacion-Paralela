@@ -1,13 +1,19 @@
 import socket
 import json
+import os
 from pyspark.sql import SparkSession
+from dotenv import load_dotenv
 
 from utils import *
 
-HOST = "0.0.0.0"
-PORT = 5000
-DATA_PATH = "./data/transactions.csv"
+load_dotenv()
 
+HOST = os.getenv("SERVER_HOST")
+PORT = int(os.getenv("SERVER_PORT"))
+
+DATA_PATH = "./data/transactions.csv"
+stores_df = None
+products_df = None
 
 def start_spark():
     spark = (
@@ -20,6 +26,7 @@ def start_spark():
         .config("spark.driver.host", "127.0.0.1") \
         .config("spark.executor.memory", "4g") \
         .config("spark.sql.shuffle.partitions", "8") \
+        .config("spark.jars", "./dependencies/postgresql-42.7.3.jar")
         .getOrCreate()
     )
     spark.sparkContext.setLogLevel("WARN")
@@ -32,23 +39,36 @@ def process_request(df, request):
 
     if operation == "top_sales":
         log_operation("Top de sucursales con más ventas")
-        return top_sales(df, params.get("top_n", 5))
+        return top_sales(df, stores_df, params.get("top_n", 5))
 
     elif operation == "total_sales_by_branch":
         log_operation("Ventas totales por sucursal")
-        return total_sales_by_branch(df, params.get("top_n", 10))
+        return total_sales_by_branch(df, stores_df, params.get("id_sucursal", 10))
 
     elif operation == "top_selling_products":
         log_operation("Top de productos más vendidos")
-        return top_selling_products(df)
+        return top_selling_products(df, products_df)
 
     elif operation == "return_rate_by_store":
         log_operation("Tasa de devoluciones por tienda")
-        return return_rate_by_store(df)
+        return return_rate_by_store(df, stores_df)
 
     elif operation == "anomalous_return_days":
         log_operation("Días con devoluciones anómalas")
         return anomalous_return_days(df)    
+
+    elif operation == "top_products_by_store":
+        log_operation("Top productos por sucursal")
+        return top_selling_products_by_store(
+            df,
+            products_df, 
+            params.get("store_id"),
+            params.get("top_n", 10)
+        )
+
+    elif operation == "list_stores":
+        log_operation("Listado de tiendas")
+        return stores_df.select("Store_ID", "Store_Name").orderBy("Store_ID")
 
     else:
         raise ValueError("Operación no válida")
@@ -57,8 +77,19 @@ def log_operation(op_name: str):
     print(f"[SERVER] Operación ejecutada: {op_name}")
 
 def main():
+    global stores_df, products_df
+
     spark = start_spark()
     df = load_and_prepare_transactions(spark, DATA_PATH)
+
+    stores_df = load_sales_from_postgres(spark, "stores") \
+    .select("Store_ID", "Store_Name")
+
+    products_df = load_sales_from_postgres(spark, "products") \
+    .select("Product_ID", "Description_EN")
+
+    stores_df.cache()
+    products_df.cache()
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((HOST, PORT))
@@ -80,7 +111,10 @@ def main():
             conn.sendall(json.dumps(rows).encode())
 
         except Exception as e:
-            conn.sendall(str(e).encode())
+            error_response = {
+                "error": str(e)
+            }
+            conn.sendall(json.dumps(error_response).encode())
 
         finally:
             conn.close()

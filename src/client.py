@@ -41,6 +41,7 @@ def get_stores():
     return [json.loads(r) for r in result]
 
 def select_store():
+    os.system("clear")
     stores = get_stores()
 
     print(Colors.CYAN + "\n=== Seleccione una sucursal ===\n" + Colors.RESET)
@@ -113,7 +114,7 @@ def main():
         if option == 1:
             payload = {
                 "operation": "top_sales",
-                "params": {"top_n": input_int(Colors.YELLOW + "Ingrese el valor del tamaño del top: " + Colors.RESET, 1, 35)}
+                "params": {"top_n": input_int(Colors.YELLOW + "\nIngrese el valor del tamaño del top: " + Colors.RESET, 1, 35)}
             }
 
         elif option == 2:
@@ -125,7 +126,7 @@ def main():
         elif option == 3:
             payload = {
                 "operation": "top_selling_products",
-                "params": {"top_n": input_int(Colors.YELLOW + "Ingrese el valor del tamaño del top: " + Colors.RESET, 1, 100)}
+                "params": {"top_n": input_int(Colors.YELLOW + "\nIngrese el valor del tamaño del top: " + Colors.RESET, 1, 100)}
             }
 
         elif option == 4:
@@ -133,7 +134,7 @@ def main():
                 "operation": "top_products_by_store",
                 "params": {
                     "store_id": select_store(),
-                    "top_n": input_int(Colors.YELLOW + "Ingrese el valor del tamaño del top: " + Colors.RESET, 1, 100)
+                    "top_n": input_int(Colors.YELLOW + "\nIngrese el valor del tamaño del top: " + Colors.RESET, 1, 100)
                 }
             }
         elif option == 5:
@@ -146,7 +147,7 @@ def main():
             }     
         
         elif option == 7:
-            print(Colors.BLUE + "Saliendo del sistema..." + Colors.RESET)     
+            print(Colors.BLUE + "\nSaliendo del sistema..." + Colors.RESET)     
             break
 
         else:

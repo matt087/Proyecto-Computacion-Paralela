@@ -30,21 +30,33 @@ def send_request(payload):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
     s.sendall(json.dumps(payload).encode())
+    s.shutdown(socket.SHUT_WR)
+    
+    chunks = []
+    while True:
+        part = s.recv(4096)
+        if not part:
+            break
+        chunks.append(part)
 
-    data = s.recv(200000).decode()
     s.close()
+    data = b"".join(chunks).decode()
 
     end_time = time.perf_counter()
     elapsed = end_time - start_time
 
     return json.loads(data), elapsed
 
+
 def get_stores():
     payload = {
         "operation": "list_stores"
     }
     result = send_request(payload)
-    return [json.loads(r) for r in result]
+    if isinstance(result, dict) and "error" in result:
+        print("Error:", result["error"])
+        return []
+    return result
 
 def select_store():
     os.system("clear")
@@ -94,8 +106,7 @@ def print_result(result, title=None):
         print(Colors.YELLOW + "\nSin resultados" + Colors.RESET)
         return
 
-    rows = [json.loads(r) for r in result]    
-    print(tabulate(rows, headers="keys", tablefmt="grid"))
+    print(tabulate(result, headers="keys", tablefmt="grid"))
 
 def main():
     os.system("clear")

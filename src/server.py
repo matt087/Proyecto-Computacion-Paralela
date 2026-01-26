@@ -25,11 +25,12 @@ def start_spark():
         .config("spark.ui.bindAddress", "0.0.0.0")
         .config("spark.driver.host", "10.0.20.1")
         .config("spark.driver.bindAddress", "0.0.0.0")
-        .config("spark.executor.memory", "2g")
-        .config("spark.executor.cores", "1")
-        .config("spark.sql.shuffle.partitions", "8")
+        .config("spark.executor.memory", "5g")
+        .config("spark.executor.cores", "4")
+        .config("spark.executor.instances", "2")
+        .config("spark.executor.memoryOverhead", "1g")
+        .config("spark.sql.shuffle.partitions", "16")
         .config("spark.jars", "./dependencies/postgresql-42.7.3.jar")
-
         .getOrCreate()
     )
 
@@ -54,7 +55,6 @@ def persist_result_parquet(
 
     (
         df
-        .coalesce(1)  
         .write
         .mode("overwrite")
         .parquet(output_path)
@@ -69,30 +69,31 @@ def process_request(df, request):
     if operation == "top_sales":
         result_df = top_sales(df, stores_df, params.get("top_n", 5))
         log_operation("Top de sucursales con más ventas")
-        persist_result_parquet(result_df, "top_sales")
+        #persist_result_parquet(result_df, "top_sales")
         return result_df
 
     elif operation == "total_sales_by_branch":
         result_df = total_sales_by_branch(df, stores_df, params.get("id_sucursal", 10))
         log_operation("Ventas totales por sucursal")
-        persist_result_parquet(result_df, "total_sales_by_branch")
+        #persist_result_parquet(result_df, "total_sales_by_branch")
         return result_df
 
     elif operation == "top_selling_products":
         result_df = top_selling_products(df, products_df)
         log_operation("Top de productos más vendidos")
-        persist_result_parquet(result_df, "top_selling_products")
+        #persist_result_parquet(result_df, "top_selling_products")
         return result_df
 
     elif operation == "return_rate_by_store":
+        result_df = return_rate_by_store(df, stores_df)
         log_operation("Tasa de devoluciones por tienda")
-        persist_result_parquet(result_df, "return_rate_by_store")
-        return return_rate_by_store(df, stores_df)
+        #persist_result_parquet(result_df, "return_rate_by_store")
+        return result_df
 
     elif operation == "anomalous_return_days":
         result_df = anomalous_return_days(df)    
         log_operation("Días con devoluciones anómalas")    
-        persist_result_parquet(result_df, "anomalous_return_days")
+       #persist_result_parquet(result_df, "anomalous_return_days")
         return result_df
 
     elif operation == "top_products_by_store":
@@ -103,7 +104,7 @@ def process_request(df, request):
             params.get("top_n", 10)
         )
         log_operation("Top productos por sucursal")
-        persist_result_parquet(result_df, "top_products_by_store")
+        #persist_result_parquet(result_df, "top_products_by_store")
         return result_df
 
     elif operation == "list_stores":
@@ -145,11 +146,12 @@ def main():
         try:
             data = conn.recv(4096).decode()
             request = json.loads(data)
-
+            print("[SERVER] Request recibido")
             result_df = process_request(df, request)
-
-            rows = result_df.toJSON().collect()
+            rows = [r.asDict(recursive=True) for r in result_df.limit(200).collect()]
+            print("[SERVER] Collect listo, filas:", len(rows))
             conn.sendall(json.dumps(rows).encode())
+            conn.shutdown(socket.SHUT_WR)
 
         except Exception as e:
             error_response = {

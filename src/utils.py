@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from pyspark.sql import DataFrame
 from pyspark.sql.types import DoubleType, IntegerType
 from pyspark.sql.functions import (
-    col, sum, count, avg, stddev, when, to_date, desc, round
+    col, sum, count, avg, stddev, when, to_date, desc, round, date_format
 )
 # ======================================================
 # 0. Carga de info desde la bbdd
@@ -196,6 +196,7 @@ def anomalous_return_days(df: DataFrame) -> DataFrame:
     umbral = media + desviacion
 
     anomalies = daily_returns.filter(col("Refunded_Amount") > umbral)
+    anomalies = anomalies.withColumn("Date", date_format(col("Date"), "yyyy-MM-dd"))
 
     return anomalies
 
